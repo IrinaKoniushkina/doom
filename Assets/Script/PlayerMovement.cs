@@ -16,13 +16,12 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-        // Движение
+  
         float x = Input.GetAxis("Horizontal") * speed * Time.deltaTime;
         float z = Input.GetAxis("Vertical") * speed * Time.deltaTime;
         Vector3 move = transform.right * x + transform.forward * z;
         controller.Move(move);
 
-        // Вращение камеры
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
 

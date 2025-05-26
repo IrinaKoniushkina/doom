@@ -10,7 +10,7 @@ public class Gun : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetButtonDown("Fire1")) // Левая кнопка мыши
+        if (Input.GetButtonDown("Fire1"))
         {
             Shoot();
         }
@@ -18,13 +18,14 @@ public class Gun : MonoBehaviour
 
     void Shoot()
     {
-        muzzleFlash.Play();
-        shootSound.Play();
+        if (muzzleFlash != null) muzzleFlash.Play();
+        if (shootSound != null) shootSound.Play();
 
         RaycastHit hit;
         if (Physics.Raycast(fpsCam.transform.position, fpsCam.transform.forward, out hit, range))
         {
-            Enemy enemy = hit.transform.GetComponent<Enemy>();
+            Debug.Log("Попал в: " + hit.transform.name); 
+            var enemy = hit.transform.GetComponent<Enemy>();
             if (enemy != null)
             {
                 enemy.TakeDamage(damage);
