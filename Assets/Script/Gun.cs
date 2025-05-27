@@ -2,73 +2,74 @@ using UnityEngine;
 
 public class Gun : MonoBehaviour
 {
-    public float damage = 10f;
-    public float range = 100f;
-    public Camera fpsCam;
-    public ParticleSystem muzzleFlash;
-    public AudioSource shootSound;
-    public float rotationSpeed = 5f;
-    
-    [Header("Bullet Settings")]
+    [Header("Shooting")]
     public GameObject bulletPrefab;
     public Transform bulletSpawnPoint;
     public float bulletSpeed = 30f;
     public float bulletLifetime = 3f;
+    public ParticleSystem muzzleFlash;
+    public AudioSource shootSound;
+
+    [Header("Aiming")]
+    public float rotationSpeed = 5f;
+    public float maxAngle = 60f; 
+    private Vector3 initialForward;
+
+    void Start()
+    {
+        initialForward = transform.forward;
+    }
 
     void Update()
     {
-        // Поворот оружия за курсором
-        RotateGunToMouse();
-
-        // Стрельба пулей по ПКМ
-        if (Input.GetMouseButtonDown(1)) // 1 - правая кнопка мыши
+        AimWithMouse();
+        
+        if (Input.GetMouseButtonDown(1)) 
         {
             ShootBullet();
         }
     }
 
-    void RotateGunToMouse()
+    void AimWithMouse()
     {
-        Ray ray = fpsCam.ScreenPointToRay(Input.mousePosition);
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
         
-        if (Physics.Raycast(ray, out hit, range))
+        if (Physics.Raycast(ray, out hit, 100f))
         {
             Vector3 targetDirection = hit.point - transform.position;
-            targetDirection.y = 0; // Оставляем только горизонтальное вращение
+            targetDirection.y = 0;
             
-            Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            // Ограничиваем угол поворота относительно начального направления
+            float angle = Vector3.Angle(initialForward, targetDirection);
+            if (angle <= maxAngle)
+            {
+                Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
+                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+            }
         }
     }
 
     void ShootBullet()
+{
+    if (bulletPrefab == null || bulletSpawnPoint == null)
     {
-        if (bulletPrefab == null || bulletSpawnPoint == null)
-        {
-            Debug.LogError("Bullet prefab or spawn point not assigned!");
-            return;
-        }
-
-        // Эффекты выстрела
-        if (muzzleFlash != null) muzzleFlash.Play();
-        if (shootSound != null) shootSound.Play();
-
-        // Создание пули
-        GameObject bullet = Instantiate(bulletPrefab, bulletSpawnPoint.position, bulletSpawnPoint.rotation);
-        
-        // Настройка пули
-        Rigidbody rb = bullet.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.linearVelocity = bulletSpawnPoint.forward * bulletSpeed;
-        }
-        else
-        {
-            Debug.LogError("Bullet prefab has no Rigidbody component!");
-        }
-
-        // Уничтожение пули через время
-        Destroy(bullet, bulletLifetime);
+        Debug.LogError("Bullet prefab or spawn point not assigned!");
+        return;
     }
+
+    GameObject bullet = Instantiate(bulletPrefab, bulletSpawnPoint.position, bulletSpawnPoint.rotation);
+    
+    Rigidbody rb = bullet.GetComponent<Rigidbody>();
+    if (rb != null)
+    {
+        rb.linearVelocity = bulletSpawnPoint.forward * bulletSpeed;
+    }
+    else
+    {
+        Debug.LogError("Bullet has no Rigidbody!");
+    }
+
+    Destroy(bullet, bulletLifetime);
+}
 }

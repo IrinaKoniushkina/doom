@@ -2,22 +2,26 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    public float speed = 5f;
+    public float moveSpeed = 5f;
+    public float rotationSpeed = 100f; // Скорость поворота по стрелкам
     private CharacterController controller;
 
     void Start()
     {
         controller = GetComponent<CharacterController>();
-        Cursor.lockState = CursorLockMode.None; // Курсор виден
+        Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
     }
 
     void Update()
     {
-        // Движение по стрелкам
-        float x = Input.GetAxis("Horizontal") * speed * Time.deltaTime;
-        float z = Input.GetAxis("Vertical") * speed * Time.deltaTime;
-        Vector3 move = transform.right * x + transform.forward * z;
+        // Движение вперед/назад
+        float moveInput = Input.GetAxis("Vertical");
+        Vector3 move = transform.forward * moveInput * moveSpeed * Time.deltaTime;
         controller.Move(move);
+
+        // Поворот по стрелкам влево/вправо
+        float rotationInput = Input.GetAxis("Horizontal");
+        transform.Rotate(Vector3.up * rotationInput * rotationSpeed * Time.deltaTime);
     }
 }

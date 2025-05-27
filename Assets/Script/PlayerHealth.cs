@@ -1,23 +1,39 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerHealth : MonoBehaviour
 {
-    public float health = 100f; 
+    public float maxHealth = 100f;
+    public float currentHealth;
+    public Slider healthSlider; // Перетащите сюда UI Slider
+
+    void Start()
+    {
+        currentHealth = maxHealth;
+        UpdateHealthUI();
+    }
 
     public void TakeDamage(float damage)
     {
-        health -= damage;
-        Debug.Log("Здоровье игрока: " + health);
+        currentHealth -= damage;
+        UpdateHealthUI();
 
-        if (health <= 0)
+        if (currentHealth <= 0)
         {
             Die();
         }
     }
 
+    void UpdateHealthUI()
+    {
+        if (healthSlider != null)
+        {
+            healthSlider.value = currentHealth / maxHealth; // Нормализованное значение (0-1)
+        }
+    }
+
     void Die()
     {
-        Debug.Log("Игрок умер!");
-        
+        Debug.Log("Player died!");
     }
 }

@@ -2,49 +2,89 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-    public float health = 10f;
-    public GameObject projectile;  
-    public Transform player;
+    [Header("Combat Settings")]
+    public float health = 50f;
+    public float attackRange = 15f;
     public float shootCooldown = 2f;
-    public float projectileSpeed = 10f; // Добавим отдельную переменную для скорости
+    public float damagePerShot = 10f;
+    
+    [Header("Projectile Settings")]
+    public GameObject enemyProjectilePrefab;
+    public Transform projectileSpawnPoint;
+    public float projectileSpeed = 20f;
+    
+    [Header("Effects")]
+    public ParticleSystem deathEffect;
+    public AudioClip shootSound;
+    
+    private Transform player;
     private float lastShootTime;
-    public ParticleSystem bloodEffect;
+    private AudioSource audioSource;
 
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player").transform;
+        audioSource = GetComponent<AudioSource>();
     }
 
     void Update()
     {
-        if (Time.time > lastShootTime + shootCooldown)
+        if (player == null) return;
+
+        // Проверяем расстояние до игрока
+        float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+        
+        // Если игрок в радиусе атаки и прошло время перезарядки
+        if (distanceToPlayer <= attackRange && Time.time > lastShootTime + shootCooldown)
         {
-            Shoot();
+            ShootAtPlayer();
             lastShootTime = Time.time;
+        }
+
+        // Поворачиваемся к игроку
+        if (distanceToPlayer <= attackRange * 1.5f)
+        {
+            FacePlayer();
         }
     }
 
-    void Shoot()
+    void FacePlayer()
     {
-        if (projectile == null) 
+        Vector3 direction = (player.position - transform.position).normalized;
+        direction.y = 0; // Не наклоняем врага по вертикали
+        Quaternion lookRotation = Quaternion.LookRotation(direction);
+        transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f);
+    }
+
+    void ShootAtPlayer()
+    {
+        if (enemyProjectilePrefab == null || projectileSpawnPoint == null) return;
+
+        // Создаем снаряд
+        GameObject projectile = Instantiate(enemyProjectilePrefab, 
+                                         projectileSpawnPoint.position, 
+                                         projectileSpawnPoint.rotation);
+        
+        // Направляем снаряд в игрока
+        Vector3 shootDirection = (player.position - projectileSpawnPoint.position).normalized;
+        
+        // Настройка снаряда
+        EnemyProjectile enemyProjectile = projectile.GetComponent<EnemyProjectile>();
+        if (enemyProjectile != null)
         {
-            Debug.LogError("Projectile not assigned!");
-            return;
+            enemyProjectile.SetDamage(damagePerShot);
         }
 
-        GameObject bullet = Instantiate(projectile, transform.position, Quaternion.identity);
-        
-        Vector3 direction = (player.position - transform.position).normalized;
-        
-
-        Rigidbody rb = bullet.GetComponent<Rigidbody>();
+        Rigidbody rb = projectile.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.linearVelocity = direction * projectileSpeed;
+            rb.linearVelocity = shootDirection * projectileSpeed;
         }
-        else
+
+        // Эффекты
+        if (shootSound != null && audioSource != null)
         {
-            Debug.LogError("Projectile has no Rigidbody component!");
+            audioSource.PlayOneShot(shootSound);
         }
     }
 
@@ -52,12 +92,7 @@ public class Enemy : MonoBehaviour
     {
         health -= amount;
         
-        if (bloodEffect != null)
-        {
-            Instantiate(bloodEffect, transform.position, Quaternion.identity);
-        }
-        
-        if (health <= 0f) 
+        if (health <= 0f)
         {
             Die();
         }
@@ -65,6 +100,10 @@ public class Enemy : MonoBehaviour
 
     void Die()
     {
+        if (deathEffect != null)
+        {
+            Instantiate(deathEffect, transform.position, Quaternion.identity);
+        }
         Destroy(gameObject);
     }
 }
