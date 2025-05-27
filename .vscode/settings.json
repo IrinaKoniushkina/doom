@@ -56,5 +56,5 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "DOOM.sln"
+    "dotnet.defaultSolution": "Unity_DOOM.sln"
 }
